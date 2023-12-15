@@ -53,6 +53,7 @@ _ = COLUMNS
 DATE_COL = "Date"
 CALORIES_COL = "Calories"
 TOTAL_TIME_COL = "Total Time"
+TIME_COL = "Time"
 AVG_HR_COL = "Avg HR"
 DT_FORMAT = "%Y-%m-%d %H:%M:%S"
 DAY_SECONDS = 60 * 60 * 24
@@ -84,9 +85,19 @@ def calculate_total(src="Activities.csv"):
 
             rows += 1
 
-            dt_tot = datetime.strptime(
-                row[TOTAL_TIME_COL], "%H:%M:%S"
-            )  # Works for <= 24h
+            try:
+                dt_tot = datetime.strptime(
+                    row[TOTAL_TIME_COL], "%H:%M:%S"
+                )  # Works for <= 24h
+            except ValueError:
+                try:
+                    dt_tot = datetime.strptime(
+                        row[TIME_COL], "%H:%M:%S"
+                    )  # Works for <= 24h
+                except ValueError:
+                    rich.print("Skipping", row)
+                    continue
+
             delta = timedelta(
                 hours=dt_tot.hour, minutes=dt_tot.minute, seconds=dt_tot.second
             )

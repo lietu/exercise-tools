@@ -1,4 +1,5 @@
 import csv
+import shutil
 from datetime import datetime
 
 import rich
@@ -41,11 +42,16 @@ def read_csv(src):
 def write_csv(dst, rows):
     fields = rows[0].keys()
 
+    shutil.copy(dst, dst + ".bak")
     with open(dst, newline="", mode="w") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fields)
         writer.writeheader()
         for row in rows:
-            writer.writerow(row)
+            try:
+                writer.writerow(row)
+            except:
+                rich.print(row)
+                raise
 
     rich.print(f"Wrote {len(rows)} rows of data to {dst}")
 
@@ -54,6 +60,18 @@ def write_csv(dst, rows):
 def calculate_total(src="Activities-latest.csv", dst="Activities.csv"):
     rows, old_first, old_last = read_csv(dst)
     new_rows, new_first, new_last = read_csv(src)
+
+    all_keys = set(rows[0].keys())
+    for row in rows + new_rows:
+        new_keys = set(row.keys())
+        diff = new_keys - all_keys
+        if diff:
+            rich.print("Found", diff)
+        all_keys.update(new_keys)
+
+    for row in rows + new_rows:
+        for key in all_keys:
+            row[key] = row.get(key, "")
 
     rich.print(f"Updating {dst} from {src}")
     rich.print(f"Already have data from", old_first, "to", old_last)
