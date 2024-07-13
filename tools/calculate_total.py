@@ -60,6 +60,14 @@ DAY_SECONDS = 60 * 60 * 24
 
 app = Typer()
 
+def read_time(value) -> datetime:
+    # Works for <= 24h
+    try:
+        return datetime.strptime(value, "%H:%M:%S")
+    except ValueError:
+        return datetime.strptime(value, "%H:%M:%S.%f")
+
+
 
 @app.command()
 def calculate_total(src="Activities.csv"):
@@ -86,16 +94,14 @@ def calculate_total(src="Activities.csv"):
             rows += 1
 
             try:
-                dt_tot = datetime.strptime(
-                    row[TOTAL_TIME_COL], "%H:%M:%S"
-                )  # Works for <= 24h
+                dt_tot = read_time(row[TOTAL_TIME_COL])
             except ValueError:
                 try:
-                    dt_tot = datetime.strptime(
-                        row[TIME_COL], "%H:%M:%S"
-                    )  # Works for <= 24h
+                    dt_tot = read_time(row[TIME_COL])
                 except ValueError:
                     rich.print("Skipping", row)
+                    rich.print(f"{TOTAL_TIME_COL}: {row[TOTAL_TIME_COL]}")
+                    rich.print(f"{TIME_COL}: {row[TIME_COL]}")
                     continue
 
             delta = timedelta(
